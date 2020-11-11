@@ -13,6 +13,7 @@ parser.add_argument('--api_loc', default='datasets/NAS-Bench-201-v1_1-096897.pth
 parser.add_argument('--save_loc', default='results', type=str, help='folder to save results')
 parser.add_argument('--batch_size', default=256, type=int)
 parser.add_argument('--GPU', default='0', type=str)
+parser.add_argument('--use_GPU', default=False, type=bool)
 parser.add_argument('--seed', default=1, type=int)
 parser.add_argument('--trainval', action='store_true')
 parser.add_argument('--dataset', default='cifar10', type=str)
@@ -62,7 +63,11 @@ def eval_score(jacob, labels=None):
     return -np.sum(np.log(v + k) + 1./(v + k))
 
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+if(arg.use_GPU==True):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+else:
+    device = torch.device("cpu")
 print(device)
 THE_START = time.time()
 api = API(args.api_loc)
