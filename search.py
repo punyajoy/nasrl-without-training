@@ -64,7 +64,7 @@ def eval_score(jacob, labels=None):
 
 
 
-if(arg.use_GPU==True):
+if(args.use_GPU==True):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 else:
     device = torch.device("cpu")
