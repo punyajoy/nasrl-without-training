@@ -66,7 +66,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 THE_START = time.time()
 api = API(args.api_loc)
-
+print("API loaded")
 os.makedirs(args.save_loc, exist_ok=True)
 
 train_data, valid_data, xshape, class_num = get_datasets(args.dataset, args.data_loc, cutout=0)
