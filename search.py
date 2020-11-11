@@ -7,8 +7,8 @@ from tqdm import trange
 from statistics import mean
 
 parser = argparse.ArgumentParser(description='NAS Without Training')
-parser.add_argument('--data_loc', default='../datasets/cifar', type=str, help='dataset folder')
-parser.add_argument('--api_loc', default='../datasets/NAS-Bench-201-v1_1-096897.pth',
+parser.add_argument('--data_loc', default='datasets/cifar', type=str, help='dataset folder')
+parser.add_argument('--api_loc', default='.datasets/NAS-Bench-201-v1_1-096897.pth',
                     type=str, help='path to API')
 parser.add_argument('--save_loc', default='results', type=str, help='folder to save results')
 parser.add_argument('--batch_size', default=256, type=int)
