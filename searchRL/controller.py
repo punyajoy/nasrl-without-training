@@ -9,6 +9,9 @@ import tensorflow.compat.v1 as tf
 from tensorflow.compat.v1.keras import backend as K
 
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+tf.logging.set_verbosity(tf.logging.ERROR)
+
 if not os.path.exists('weights/'):
     os.makedirs('weights/')
 
