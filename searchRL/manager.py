@@ -7,6 +7,10 @@ from keras.callbacks import ModelCheckpoint
 from tensorflow.compat.v1.keras import backend as K
 import tensorflow.compat.v1 as tf
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+tf.logging.set_verbosity(tf.logging.ERROR)
+
 class NetworkManager:
     '''
     Helper class to manage the generation of subnetwork training given a dataset
