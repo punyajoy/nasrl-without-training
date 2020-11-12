@@ -5,6 +5,8 @@ from controller import Controller
 from torch.utils import data
 import matplotlib.pyplot as plt
 import pickle as pkl
+import argparse
+
 
 class Dataset(data.Dataset):
     def __init__(self, X, y):
@@ -38,8 +40,15 @@ def load_dataset(p_val=0.1, p_test=0.2):
 
 
 if __name__ == '__main__':
+
+
+
+    parser = argparse.ArgumentParser(description='NAS RL Without Training')
+    parser.add_argument('--train_model', default=False, type=bool)
+    args = parser.parse_args()
+
     dl_train, dl_dev, dl_test = load_dataset()
-    controller = Controller()
+    controller = Controller(train_model=args.train_model)
     num_rollouts = 5000
 
     rewards = []
