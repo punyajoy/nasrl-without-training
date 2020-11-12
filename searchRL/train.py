@@ -7,6 +7,10 @@ import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
 from tensorflow.compat.v1.keras import backend as K
 
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
+tf.logging.set_verbosity(tf.logging.ERROR)
+
 from keras.datasets import cifar10
 from keras.utils import to_categorical
 
