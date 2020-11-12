@@ -48,6 +48,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dl_train, dl_dev, dl_test = load_dataset()
+
+    print("Using")
+    if(args.train_model): 
+        print("Training model to get reward")
+    else:
+        print("Reward Using special function")
+
     controller = Controller(train_model=args.train_model)
     num_rollouts = 5000
 

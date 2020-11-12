@@ -104,9 +104,11 @@ class Controller(nn.Module):
         if verbose:
             print('\nGenerated network:')
             print(self.actions)
+            
 
         net = Net(self.actions)
         if(self.train_model):
+
             accuracy = net.fit(iter_train, iter_dev)
             self.reward += accuracy
         else:
