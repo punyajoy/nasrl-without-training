@@ -91,3 +91,31 @@ class Net(nn.Module):
                     break
 
         return epoch_accuracy
+
+    def get_score_wt(self, dl_train, dl_dev):
+        list_jacob=[]
+        
+        for i, data in enumerate(iter(dl_train), 0):
+            X, y = data
+            X.requires_grad_(True)
+            yhat = self(X)
+            yhat.backward(torch.ones_like(yhat))
+            jacob = X.grad.cpu().detach().numpy()
+            list_jacob+=jacob
+        for i, data in enumerate(iter(dl_dev), 0):
+            X, y = data
+            X.requires_grad_(True)
+            yhat = self(X)
+            yhat.backward(torch.ones_like(yhat))
+            jacob = X.grad.detach()
+            list_jacob+=jacob
+        final_score=eval_score(jacob)
+
+        return final_score
+
+
+    def eval_score(jacob, labels=None):
+        corrs = np.corrcoef(jacob)
+        v, _  = np.linalg.eig(corrs)
+        k = 1e-5
+        return -np.sum(np.log(v + k) + 1./(v + k))

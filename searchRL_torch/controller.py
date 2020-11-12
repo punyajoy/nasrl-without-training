@@ -8,7 +8,7 @@ from model import Net
 
 class Controller(nn.Module):
 
-    def __init__(self, num_actions=10, hidden_size=64):
+    def __init__(self, num_actions=10, hidden_size=64,train_model=True):
         super(Controller, self).__init__()
 
         self.cell = nn.GRUCell(
@@ -20,7 +20,7 @@ class Controller(nn.Module):
             in_features=hidden_size,
             out_features=num_actions
         )
-
+        self.train_model=train_model
         self.num_actions = num_actions
         self.hidden_size = hidden_size
         self.epsilon = 0.8
@@ -106,8 +106,12 @@ class Controller(nn.Module):
             print(self.actions)
 
         net = Net(self.actions)
-        accuracy = net.fit(iter_train, iter_dev)
-        self.reward += accuracy
+        if(self.train_model):
+            accuracy = net.fit(iter_train, iter_dev)
+            self.reward += accuracy
+        else:
+            score = net.get_score_wt(iter_train, iter_dev)
+            self.reward += score
 
         return self.reward
 
