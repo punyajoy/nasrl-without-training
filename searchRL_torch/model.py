@@ -101,14 +101,15 @@ class Net(nn.Module):
             yhat = self(X)
             yhat.backward(torch.ones_like(yhat))
             jacob = X.grad.cpu().detach().numpy()
-            list_jacob+=jacob
+            list_jacob.append(jacob)
         for i, data in enumerate(iter(dl_dev), 0):
             X, y = data
             X.requires_grad_(True)
             yhat = self(X)
             yhat.backward(torch.ones_like(yhat))
             jacob = X.grad.detach()
-            list_jacob+=jacob
+            list_jacob.append(jacob)
+        jacob=np.concatenate(list_jacob).ravel()
         final_score=eval_score(jacob)
 
         return final_score
