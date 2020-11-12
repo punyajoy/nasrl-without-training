@@ -1,9 +1,11 @@
 import numpy as np
 
 from keras.models import Model
-from keras import backend as K
+# from keras import backend as K
 from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
+# import tensorflow as tf
+from tensorflow.compat.v1.keras import backend as K
+import tensorflow.compat.v1 as tf
 
 class NetworkManager:
     '''
