@@ -40,8 +40,8 @@ class NetworkManager:
 
         testset = torchvision.datasets.CIFAR10(root='./data', train=False,
                                                download=True, transform=transform)
-        self.testloader = torch.utils.data.DataLoader(testset, batch_size=4,
-                                                 shuffle=False, num_workers=self.batchsize)
+        self.testloader = torch.utils.data.DataLoader(testset, batch_size=self.batchsize,
+                                                 shuffle=False, num_workers=2)
 
         classes = ('plane', 'car', 'bird', 'cat',
                    'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
@@ -128,7 +128,6 @@ class NetworkManager:
             self.moving_acc = self.beta * self.moving_acc + (1 - self.beta) * acc
             self.moving_acc = self.moving_acc / (1 - self.beta_bias)
             self.beta_bias = 0
-
             reward = np.clip(reward, -0.1, 0.1)
 
         print()
@@ -136,71 +135,6 @@ class NetworkManager:
         return reward, acc
 
     def get_rewards_wt(self, model_fn, actions):
-
-        batch_size=16
-
-        # generate a submodel given predicted actions
-        model = model_fn(actions)  # type: Model
-        #model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
-
-        # Instantiate an optimizer.
-        optimizer = keras.optimizers.SGD(learning_rate=1e-3)
-        # Instantiate a loss function.
-        loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-
-
-        X_train, y_train, X_val, y_val = self.dataset
-
-#         train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-#         train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
-
-        epochs = 2
-        for epoch in range(epochs):
-            print("\nStart of epoch %d" % (epoch,))
-
-            # Iterate over the batches of the dataset.
-
-            # Open a GradientTape to record the operations run
-            # during the forward pass, which enables auto-differentiation.
-            with tf.GradientTape() as tape:
-
-                # Run the forward pass of the layer.
-                # The operations that the layer applies
-                # to its inputs are going to be recorded
-                # on the GradientTape.
-                image=tf.Variable(X_train[0:1])
-                tape.watch(image)
-                logits = model(image, training=True)  # Logits for this minibatch
-
-                # Compute the loss value for this minibatch.
-                print(np.argmax(y_train[0:4],axis=1),logits.shape)
-                loss_value = loss_fn(np.argmax(y_train[0:1],axis=1), logits)
-                print(loss_value)
-            # Use the gradient tape to automatically retrieve
-            # the gradients of the trainable variables with respect to the loss.
-            grads = tape.gradient(loss_value, image)
-            print(grads)
-            # Run one step of gradient descent by updating
-            # the value of the variables to minimize the loss.
-            #optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-#             # Log every 200 batches.
-#             if step % 200 == 0:
-#                 print(
-#                     "Training loss (for one batch) at step %d: %.4f"
-#                     % (step, float(loss_value))
-#                 )
-#                 print("Seen so far: %s samples" % ((step + 1) * 64))
-
-
-
-        # gradients = K.gradients(model.output, model.input)
-
-        # # Wrap the input tensor and the gradient tensor in a callable function
-        # f = K.function([model.input], gradients)
-
-        # # Random input image
-        # x = np.random.rand(1, 100,100,3)
 
         reward=9
         acc=9
