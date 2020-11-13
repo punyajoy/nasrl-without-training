@@ -109,3 +109,26 @@ class NetworkManager:
         network_sess.close()
 
         return reward, acc
+
+
+
+
+    def get_rewards_wt(self, model_fn, actions):
+        with tf.Session(graph=tf.Graph()) as network_sess:
+            K.set_session(network_sess)
+
+            # generate a submodel given predicted actions
+            model = model_fn(actions)  # type: Model
+            model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+
+            gradients = K.gradients(model.output, model.input)
+
+            # Wrap the input tensor and the gradient tensor in a callable function
+            f = K.function([model.input], gradients)
+
+            # Random input image
+            x = np.random.rand(1, 100,100,3)
+
+        reward=9
+        acc=9
+        return reward, acc

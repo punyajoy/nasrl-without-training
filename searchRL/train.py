@@ -90,7 +90,7 @@ for trial in range(MAX_TRIALS):
     print("Predicted actions : ", state_space.parse_state_space_list(actions))
 
     # build a model, train and get reward and accuracy from the network manager
-    reward, previous_acc = manager.get_rewards(model_fn, state_space.parse_state_space_list(actions))
+    reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
 
     with policy_sess.as_default():
