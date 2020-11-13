@@ -78,7 +78,7 @@ class NetworkManager:
         Returns:
             a reward for training a model with the given actions
         '''
-        net=Net(actions)
+        net=Net(actions,10)
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
@@ -133,9 +133,40 @@ class NetworkManager:
         print()
         print("Manager: EWA Accuracy = ", self.moving_acc)
         return reward, acc
+    
+    def get_batch_jacobian(self,net, x, target):
+        net.zero_grad()
 
+        x.requires_grad_(True)
+
+        y = net(x)
+
+        y.backward(torch.ones_like(y))
+        jacob = x.grad.detach()
+        return jacob, target.detach()
+
+    def eval_score(self,qjacob, labels=None):
+        corrs = np.corrcoef(jacob)
+        v, _  = np.linalg.eig(corrs)
+        k = 1e-5
+        return -np.sum(np.log(v + k) + 1./(v + k))
+
+    
     def get_rewards_wt(self, model_fn, actions):
-
+        net=Net(actions,1)
+        data_iterator = iter(self.trainloader)
+        inputs, labels = next(data_iterator)
+        
+        jacobs, labels= self.get_batch_jacobian(net, inputs, labels)
+        jacobs = jacobs.reshape(jacobs.size(0), -1).cpu().numpy()
+        
+        try:
+            s = self.eval_score(jacobs, labels)
+        except Exception as e:
+            print(e)
+            s = np.nan
+        print(s)
+        
         reward=9
         acc=9
         return reward, acc

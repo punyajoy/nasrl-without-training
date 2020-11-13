@@ -3,7 +3,7 @@ import torch.nn.functional as F
 
 
 class Net(nn.Module):
-    def __init__(self,actions):
+    def __init__(self,actions,num_classes):
         super(Net, self).__init__()
         kernel_1, filters_1, kernel_2, filters_2, kernel_3, filters_3, kernel_4, filters_4 = actions
         self.conv1 = nn.Conv2d(3, filters_1, kernel_1,stride=2)
@@ -12,7 +12,7 @@ class Net(nn.Module):
         self.conv4 = nn.Conv2d(filters_3, filters_4, kernel_4,stride=1)
         self.pool4 = nn.MaxPool2d(2, 2)
         finaldimension=self.get_final_dim(actions)
-        self.fc3 = nn.Linear(filters_4*finaldimension*finaldimension,10)
+        self.fc3 = nn.Linear(filters_4*finaldimension*finaldimension,num_classes)
     
     def get_final_dim(self,actions):
         in_dim=32

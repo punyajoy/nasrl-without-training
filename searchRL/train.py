@@ -34,7 +34,7 @@ EMBEDDING_DIM = 20  # dimension of the embeddings for each state
 ACCURACY_BETA = 0.8  # beta value for the moving average of the accuracy
 CLIP_REWARDS = 0.0  # clip rewards in the [-0.05, 0.05] range
 RESTORE_CONTROLLER = True  # restore controller to continue training
-USE_TRAIN=True
+USE_TRAIN=False
 # construct a state space
 state_space = StateSpace()
 
