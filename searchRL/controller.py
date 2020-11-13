@@ -366,7 +366,7 @@ class Controller:
                         labels = tf.placeholder(dtype=tf.float32, shape=(None, size), name='cell_label_%d' % i)
                         self.policy_labels.append(labels)
 
-                        ce_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=classifier, labels=labels)
+                        ce_loss = tf.nn.softmax_cross_entropy_with_logits(logits=classifier, labels=labels)
                         tf.summary.scalar('state_%d_ce_loss' % (i + 1), tf.reduce_mean(ce_loss))
 
                     cross_entropy_loss += ce_loss

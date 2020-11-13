@@ -1,0 +1,3 @@
+project_name='DL-project/nasrlwt'
+#Replace with your own token
+api_token= 'eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vdWkubmVwdHVuZS5haSIsImFwaV91cmwiOiJodHRwczovL3VpLm5lcHR1bmUuYWkiLCJhcGlfa2V5IjoiOGYxNjE3MmItMWVjNi00NDExLWJiZGYtYWVjMjExNWI3ZTNkIn0='

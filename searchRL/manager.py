@@ -3,16 +3,13 @@ import numpy as np
 from keras.models import Model
 # from keras import backend as K
 from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
+# import tensorflow as tf
 from tensorflow.compat.v1.keras import backend as K
 import tensorflow.compat.v1 as tf
-
-
-
+import neptune
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 tf.logging.set_verbosity(tf.logging.ERROR)
-
 
 class NetworkManager:
     '''
@@ -75,7 +72,7 @@ class NetworkManager:
 
             # unpack the dataset
             X_train, y_train, X_val, y_val = self.dataset
-            print(X_train.shape)
+
             # train the model using Keras methods
             model.fit(X_train, y_train, batch_size=self.batchsize, epochs=self.epochs,
                       verbose=1, validation_data=(X_val, y_val),
@@ -107,6 +104,7 @@ class NetworkManager:
 
             print()
             print("Manager: EWA Accuracy = ", self.moving_acc)
+            neptune.log_metric("EWA",  self.moving_acc)
 
         # clean up resources and GPU memory
         network_sess.close()
@@ -122,64 +120,15 @@ class NetworkManager:
 
             # generate a submodel given predicted actions
             model = model_fn(actions)  # type: Model
-            #model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+            model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
 
-            # Instantiate an optimizer.
-            optimizer = keras.optimizers.SGD(learning_rate=1e-3)
-            # Instantiate a loss function.
-            loss_fn = keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+            gradients = K.gradients(model.output, model.input)
 
+            # Wrap the input tensor and the gradient tensor in a callable function
+            f = K.function([model.input], gradients)
 
-            X_train, y_train, X_val, y_val = self.dataset
-
-            train_dataset = tf.data.Dataset.from_tensor_slices((X_train, y_train))
-            train_dataset = train_dataset.shuffle(buffer_size=1024).batch(batch_size)
-
-            epochs = 2
-            for epoch in range(epochs):
-                print("\nStart of epoch %d" % (epoch,))
-
-                # Iterate over the batches of the dataset.
-                for step, (x_batch_train, y_batch_train) in enumerate(train_dataset):
-
-                    # Open a GradientTape to record the operations run
-                    # during the forward pass, which enables auto-differentiation.
-                    with tf.GradientTape() as tape:
-
-                        # Run the forward pass of the layer.
-                        # The operations that the layer applies
-                        # to its inputs are going to be recorded
-                        # on the GradientTape.
-                        logits = model(x_batch_train, training=True)  # Logits for this minibatch
-
-                        # Compute the loss value for this minibatch.
-                        loss_value = loss_fn(y_batch_train, logits)
-
-                    # Use the gradient tape to automatically retrieve
-                    # the gradients of the trainable variables with respect to the loss.
-                    grads = tape.gradient(loss_value, model.trainable_weights)
-
-                    # Run one step of gradient descent by updating
-                    # the value of the variables to minimize the loss.
-                    optimizer.apply_gradients(zip(grads, model.trainable_weights))
-
-                    # Log every 200 batches.
-                    if step % 200 == 0:
-                        print(
-                            "Training loss (for one batch) at step %d: %.4f"
-                            % (step, float(loss_value))
-                        )
-                        print("Seen so far: %s samples" % ((step + 1) * 64))
-
-
-
-            # gradients = K.gradients(model.output, model.input)
-
-            # # Wrap the input tensor and the gradient tensor in a callable function
-            # f = K.function([model.input], gradients)
-
-            # # Random input image
-            # x = np.random.rand(1, 100,100,3)
+            # Random input image
+            x = np.random.rand(1, 100,100,3)
 
         reward=9
         acc=9
