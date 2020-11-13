@@ -112,12 +112,12 @@ class Net(nn.Module):
             jacob = X.grad.detach()
             list_jacob.append(jacob)
         jacob=np.concatenate(list_jacob).ravel()
-        final_score=eval_score(jacob)
+        final_score=self.eval_score(jacob)
 
         return final_score
 
 
-    def eval_score(jacob, labels=None):
+    def eval_score(self,jacob, labels=None):
         corrs = np.corrcoef(jacob)
         v, _  = np.linalg.eig(corrs)
         k = 1e-5
