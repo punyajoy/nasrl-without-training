@@ -1,17 +1,11 @@
 import numpy as np
-
-from keras.models import Model
-# from keras import backend as K
-from keras.callbacks import ModelCheckpoint
-import tensorflow as tf
-from tensorflow.compat.v1.keras import backend as K
-import tensorflow.compat.v1 as tf
-import keras
-
-
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
-tf.logging.set_verbosity(tf.logging.ERROR)
+import torch
+import torchvision
+import torchvision.transforms as transforms
+import torch.optim as optim
+from model_torch import Net
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 class NetworkManager:
@@ -32,8 +26,26 @@ class NetworkManager:
                 large weight updates. Use when training is highly unstable.
         '''
         self.dataset = dataset
+        
+        
+        
         self.epochs = epochs
         self.batchsize = child_batchsize
+        
+        transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        trainset = torchvision.datasets.CIFAR10(root='./data', train=True,
+                                                download=True, transform=transform)
+        self.trainloader = torch.utils.data.DataLoader(trainset, batch_size=self.batchsize,
+                                                  shuffle=True, num_workers=2)
+
+        testset = torchvision.datasets.CIFAR10(root='./data', train=False,
+                                               download=True, transform=transform)
+        self.testloader = torch.utils.data.DataLoader(testset, batch_size=4,
+                                                 shuffle=False, num_workers=self.batchsize)
+
+        classes = ('plane', 'car', 'bird', 'cat',
+                   'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
         self.clip_rewards = clip_rewards
 
         self.beta = acc_beta
@@ -66,55 +78,62 @@ class NetworkManager:
         Returns:
             a reward for training a model with the given actions
         '''
-        with tf.Session(graph=tf.Graph()) as network_sess:
-            K.set_session(network_sess)
+        net=Net(actions)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
-            # generate a submodel given predicted actions
-            model = model_fn(actions)  # type: Model
-            model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+        for epoch in range(self.epochs):  # loop over the dataset multiple times
+            running_loss = 0.0
+            for i, data in enumerate(self.trainloader, 0):
+                # get the inputs; data is a list of [inputs, labels]
+                inputs, labels = data
 
-            # unpack the dataset
-            X_train, y_train, X_val, y_val = self.dataset
-            print(X_train.shape)
-            # train the model using Keras methods
-            model.fit(X_train, y_train, batch_size=self.batchsize, epochs=self.epochs,
-                      verbose=1, validation_data=(X_val, y_val),
-                      callbacks=[ModelCheckpoint('weights/temp_network.h5',
-                                                 monitor='val_acc', verbose=1,
-                                                 save_best_only=True,
-                                                 save_weights_only=True)])
+                # zero the parameter gradients
+                optimizer.zero_grad()
 
-            # load best performance epoch in this training session
-            model.load_weights('weights/temp_network.h5')
+                # forward + backward + optimize
+                outputs = net(inputs)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            # evaluate the model
-            loss, acc = model.evaluate(X_val, y_val, batch_size=self.batchsize)
+                # print statistics
+                running_loss += loss.item()
+                if i % 200 == 199:    # print every 2000 mini-batches
+                    print('[%d, %5d] loss: %.3f' %
+                          (epoch + 1, i + 1, running_loss / 2000))
+                    running_loss = 0.0
+            correct = 0
+            total = 0
+            with torch.no_grad():
+                for data in self.testloader:
+                    images, labels = data
+                    outputs = net(images)
+                    _, predicted = torch.max(outputs.data, 1)
+                    total += labels.size(0)
+                    correct += (predicted == labels).sum().item()
 
-            # compute the reward
-            reward = (acc - self.moving_acc)
+            print('Accuracy of the network on the 10000 test images: %d %%' % (
+                100 * correct / total))
+        
+        acc=correct/total
+        reward = (acc - self.moving_acc)
 
-            # if rewards are clipped, clip them in the range -0.05 to 0.05
-            if self.clip_rewards:
-                reward = np.clip(reward, -0.05, 0.05)
+        # if rewards are clipped, clip them in the range -0.05 to 0.05
+        if self.clip_rewards:
+            reward = np.clip(reward, -0.05, 0.05)
 
-            # update moving accuracy with bias correction for 1st update
-            if self.beta > 0.0 and self.beta < 1.0:
-                self.moving_acc = self.beta * self.moving_acc + (1 - self.beta) * acc
-                self.moving_acc = self.moving_acc / (1 - self.beta_bias)
-                self.beta_bias = 0
+        # update moving accuracy with bias correction for 1st update
+        if self.beta > 0.0 and self.beta < 1.0:
+            self.moving_acc = self.beta * self.moving_acc + (1 - self.beta) * acc
+            self.moving_acc = self.moving_acc / (1 - self.beta_bias)
+            self.beta_bias = 0
 
-                reward = np.clip(reward, -0.1, 0.1)
+            reward = np.clip(reward, -0.1, 0.1)
 
-            print()
-            print("Manager: EWA Accuracy = ", self.moving_acc)
-
-        # clean up resources and GPU memory
-        network_sess.close()
-
+        print()
+        print("Manager: EWA Accuracy = ", self.moving_acc)
         return reward, acc
-
-
-
 
     def get_rewards_wt(self, model_fn, actions):
 

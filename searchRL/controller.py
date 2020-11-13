@@ -17,6 +17,7 @@ if not os.path.exists('weights/'):
 
 
 class StateSpace:
+    
     '''
     State Space manager
 

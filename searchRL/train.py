@@ -15,8 +15,8 @@ from keras.datasets import cifar10
 from keras.utils import to_categorical
 
 from controller import Controller, StateSpace
-from manager import NetworkManager
-from model import model_fn
+from manager_torch import NetworkManager
+from model_torch import Net
 
 # create a shared session between Keras and Tensorflow
 policy_sess = tf.Session()
@@ -91,9 +91,9 @@ for trial in range(MAX_TRIALS):
 
     # build a model, train and get reward and accuracy from the network manager
     if(USE_TRAIN):
-        reward, previous_acc = manager.get_rewards(model_fn, state_space.parse_state_space_list(actions))
+        reward, previous_acc = manager.get_rewards(Net, state_space.parse_state_space_list(actions))
     else:
-        reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
+        reward, previous_acc = manager.get_rewards_wt(Net, state_space.parse_state_space_list(actions))
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
 
     with policy_sess.as_default():
