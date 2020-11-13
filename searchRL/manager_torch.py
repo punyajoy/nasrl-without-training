@@ -7,6 +7,8 @@ from model_torch import Net
 import torch.nn as nn
 import torch.nn.functional as F
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class NetworkManager:
     '''
@@ -26,7 +28,7 @@ class NetworkManager:
                 large weight updates. Use when training is highly unstable.
         '''
         self.dataset = dataset
-        
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
         
         self.epochs = epochs
@@ -78,9 +80,9 @@ class NetworkManager:
         Returns:
             a reward for training a model with the given actions
         '''
-        net=Net(actions,10)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+        net = Net(actions).to(self.device)
+        criterion = nn.CrossEntropyLoss().to(self.device)
+        optimizer = optim.Adam(net.parameters(), lr=0.001,betas=(0.9, 0.999))
 
         for epoch in range(self.epochs):  # loop over the dataset multiple times
             running_loss = 0.0
@@ -92,8 +94,8 @@ class NetworkManager:
                 optimizer.zero_grad()
 
                 # forward + backward + optimize
-                outputs = net(inputs)
-                loss = criterion(outputs, labels)
+                outputs = net(inputs.to(self.device))
+                loss = criterion(outputs, labels.to(self.device))
                 loss.backward()
                 optimizer.step()
 
@@ -108,10 +110,10 @@ class NetworkManager:
             with torch.no_grad():
                 for data in self.testloader:
                     images, labels = data
-                    outputs = net(images)
+                    outputs = net(images.to(self.device))
                     _, predicted = torch.max(outputs.data, 1)
                     total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
+                    correct += (predicted.cpu() == labels).sum().item()
 
             print('Accuracy of the network on the 10000 test images: %d %%' % (
                 100 * correct / total))
@@ -151,7 +153,6 @@ class NetworkManager:
         k = 1e-5
         return -np.sum(np.log(v + k) + 1./(v + k))
 
-    
     def get_rewards_wt(self, model_fn, actions):
         net=Net(actions,1)
         data_iterator = iter(self.trainloader)
