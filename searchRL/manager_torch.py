@@ -145,7 +145,7 @@ class NetworkManager:
         jacob = x.grad.detach()
         return jacob, target.detach()
 
-    def eval_score(self,qjacob, labels=None):
+    def eval_score(self,jacob, labels=None):
         corrs = np.corrcoef(jacob)
         v, _  = np.linalg.eig(corrs)
         k = 1e-5
@@ -165,8 +165,5 @@ class NetworkManager:
         except Exception as e:
             print(e)
             s = np.nan
-        print(s)
-        
-        reward=9
-        acc=9
-        return reward, acc
+        acc=0.0
+        return s, acc

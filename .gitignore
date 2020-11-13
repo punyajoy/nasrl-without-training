@@ -5,6 +5,7 @@ __pycache__/
 data/
 logs/
 Untitled.ipynb
+weights/
 # C extensions
 *.so
 
