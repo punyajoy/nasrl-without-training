@@ -3,7 +3,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import torch.optim as optim
-from model_torch import Net
+#from model_torch import Net
 import torch.nn as nn
 import neptune
 import torch.nn.functional as F
@@ -83,7 +83,7 @@ class NetworkManager:
         Returns:
             a reward for training a model with the given actions
         '''
-        net = Net(actions,10).to(self.device)
+        net = model_fn(actions,10).to(self.device)
         criterion = nn.CrossEntropyLoss().to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=0.001,betas=(0.9, 0.999))
 
@@ -139,22 +139,46 @@ class NetworkManager:
         print("Manager: EWA Accuracy = ", self.moving_acc)
         neptune.log_metric("EWA",  self.moving_acc)
         return reward, acc
+    
+    
+    def get_batch_jacobian(self,net, x, target):
+        net.zero_grad()
+        x.requires_grad_(True)
+        y = net(x)
+        y.backward(torch.ones_like(y))
+        jacob = x.grad.detach()
 
+        return jacob, target.detach()
+
+
+    def eval_score(self,jacob, labels=None):
+        corrs = np.corrcoef(jacob)
+        v, _  = np.linalg.eig(corrs)
+        k = 1e-5
+        return -np.sum(np.log(v + k) + 1./(v + k))
+
+
+    
+    
+    
     def get_rewards_wt(self, model_fn, actions):
-        with tf.Session(graph=tf.Graph()) as network_sess:
-            K.set_session(network_sess)
+        
+        net = model_fn(actions,1).to(self.device)
+        scores=[]
+        batches_average=2
+        for i, data in enumerate(self.trainloader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+            inputs, labels = inputs.to(device), labels.to(device)
+            jacobs, labels= self.get_batch_jacobian(net, inputs, labels)
+            jacobs = jacobs.reshape(jacobs.size(0), -1).cpu().numpy()
+            try:
+                s = self.eval_score(jacobs, labels)
+            except Exception as e:
+                print(e)
+                s = np.nan
 
-            # generate a submodel given predicted actions
-            model = model_fn(actions)  # type: Model
-            model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
-
-            gradients = K.gradients(model.output, model.input)
-
-            # Wrap the input tensor and the gradient tensor in a callable function
-            f = K.function([model.input], gradients)
-
-            # Random input image
-            x = np.random.rand(1, 100,100,3)
-        reward=9
-        acc=9
-        return reward, acc
+            scores.append(s)
+            
+        reward=np.mean(scores)
+        return reward, 0.0

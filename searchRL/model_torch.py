@@ -2,9 +2,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Net(nn.Module):
+class model_fn(nn.Module):
     def __init__(self,actions,num_classes):
-        super(Net, self).__init__()
+        super(model_fn, self).__init__()
         kernel_1, filters_1, kernel_2, filters_2, kernel_3, filters_3, kernel_4, filters_4 = actions
         self.conv1 = nn.Conv2d(3, filters_1, kernel_1,stride=2)
         self.conv2 = nn.Conv2d(filters_1, filters_2, kernel_2,stride=1)

@@ -15,9 +15,10 @@ from keras.datasets import cifar10
 from keras.utils import to_categorical
 
 from controller import Controller, StateSpace
-from manager import NetworkManager
+#from manager import NetworkManager
 #from model import Net
-from model import model_fn
+from model_torch import model_fn
+from manager_torch import NetworkManager
 
 import neptune
 from api_config import project_name,api_token
@@ -40,7 +41,7 @@ EMBEDDING_DIM = 20  # dimension of the embeddings for each state
 ACCURACY_BETA = 0.8  # beta value for the moving average of the accuracy
 CLIP_REWARDS = 0.0  # clip rewards in the [-0.05, 0.05] range
 RESTORE_CONTROLLER = True  # restore controller to continue training
-USE_TRAIN=True
+USE_TRAIN=False
 
 params = {
     'logging':'neptune',
