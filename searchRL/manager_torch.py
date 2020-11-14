@@ -8,7 +8,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.cuda.set_device(1)
 
+
+#device = "cpu"
 
 class NetworkManager:
     '''
@@ -80,7 +83,7 @@ class NetworkManager:
         Returns:
             a reward for training a model with the given actions
         '''
-        net = Net(actions).to(self.device)
+        net = Net(actions,10).to(self.device)
         criterion = nn.CrossEntropyLoss().to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=0.001,betas=(0.9, 0.999))
 
