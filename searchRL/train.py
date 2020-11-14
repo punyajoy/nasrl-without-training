@@ -128,7 +128,7 @@ for trial in range(MAX_TRIALS):
     else:
         reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
-        if previous_acc>best_accuracy:
+    if previous_acc>best_accuracy:
         best_accuracy = previous_acc
         best_actions = state_space.parse_state_space_list(actions)
         best_state = state_space.parse_state_space_list(state)
