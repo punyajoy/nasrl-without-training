@@ -19,6 +19,11 @@ from manager import NetworkManager
 #from model import Net
 from model import model_fn
 
+import neptune
+from api_config import project_name,api_token
+neptune.init(project_name,api_token=api_token)
+neptune.set_project(project_name)
+
 # create a shared session between Keras and Tensorflow
 policy_sess = tf.Session()
 K.set_session(policy_sess)
@@ -36,6 +41,33 @@ ACCURACY_BETA = 0.8  # beta value for the moving average of the accuracy
 CLIP_REWARDS = 0.0  # clip rewards in the [-0.05, 0.05] range
 RESTORE_CONTROLLER = True  # restore controller to continue training
 USE_TRAIN=True
+
+params = {
+    'logging':'neptune',
+    'num_layers':NUM_LAYERS,
+    'max_trials':MAX_TRIALS,
+    'max_epochs':MAX_EPOCHS,
+    'child_batchsize':CHILD_BATCHSIZE,
+    'exploration':EXPLORATION,
+    'regularization':REGULARIZATION,
+    'controller_cells':CONTROLLER_CELLS,
+    'embedding_dim':EMBEDDING_DIM,
+    'accuracy_beta':ACCURACY_BETA,
+    'clip_rewards':CLIP_REWARDS,
+    'restore_controller':RESTORE_CONTROLLER,
+    'model_name':'test'
+}
+
+model_name = params['model_name']
+name_one = model_name
+
+if(params['logging']=='neptune'):
+    neptune.create_experiment(name_one,params=params,send_hardware_metrics=False,run_monitoring_thread=False)
+    neptune.append_tag(model_name)
+    neptune.append_tag('storing_best')
+
+
+
 # construct a state space
 state_space = StateSpace()
 
@@ -96,6 +128,14 @@ for trial in range(MAX_TRIALS):
     else:
         reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
+        if previous_acc>best_accuracy:
+        best_accuracy = previous_acc
+        best_actions = state_space.parse_state_space_list(actions)
+        best_state = state_space.parse_state_space_list(state)
+
+    if(params['logging']=='neptune'):
+        neptune.log_metric('Reward',reward)
+        neptune.log_metric('Accuracy',previous_acc)
 
     with policy_sess.as_default():
         K.set_session(policy_sess)
@@ -111,12 +151,24 @@ for trial in range(MAX_TRIALS):
         loss = controller.train_step()
         print("Trial %d: Controller loss : %0.6f" % (trial + 1, loss))
 
+        if(params['logging']=='neptune'):
+            neptune.log_metric('Controller loss',loss)
+            neptune.log_metric('total_reward', total_reward)
+
+
         # write the results of this trial into a file
         with open('train_history.csv', mode='a+') as f:
             data = [previous_acc, reward]
             data.extend(state_space.parse_state_space_list(state))
             writer = csv.writer(f)
             writer.writerow(data)
+        neptune.log_artifact('train_history.csv')
     print()
 
 print("Total Reward : ", total_reward)
+neptune.log_metric('best_accuracy',best_accuracy)
+best_actions_text = ','.join([str(elem) for elem in best_actions]) 
+neptune.log_text('best_actions', best_actions_text)
+best_state_text = ','.join([str(elem) for elem in best_state]) 
+neptune.log_text('best_state', best_state_text)
+neptune.stop()

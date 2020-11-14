@@ -5,6 +5,7 @@ import torchvision.transforms as transforms
 import torch.optim as optim
 from model_torch import Net
 import torch.nn as nn
+import neptune
 import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -12,7 +13,6 @@ torch.cuda.set_device(1)
 
 
 #device = "cpu"
-
 class NetworkManager:
     '''
     Helper class to manage the generation of subnetwork training given a dataset
@@ -137,37 +137,24 @@ class NetworkManager:
 
         print()
         print("Manager: EWA Accuracy = ", self.moving_acc)
+        neptune.log_metric("EWA",  self.moving_acc)
         return reward, acc
-    
-    def get_batch_jacobian(self,net, x, target):
-        net.zero_grad()
-
-        x.requires_grad_(True)
-
-        y = net(x)
-
-        y.backward(torch.ones_like(y))
-        jacob = x.grad.detach()
-        return jacob, target.detach()
-
-    def eval_score(self,jacob, labels=None):
-        corrs = np.corrcoef(jacob)
-        v, _  = np.linalg.eig(corrs)
-        k = 1e-5
-        return -np.sum(np.log(v + k) + 1./(v + k))
 
     def get_rewards_wt(self, model_fn, actions):
-        net=Net(actions,1)
-        data_iterator = iter(self.trainloader)
-        inputs, labels = next(data_iterator)
-        
-        jacobs, labels= self.get_batch_jacobian(net, inputs, labels)
-        jacobs = jacobs.reshape(jacobs.size(0), -1).cpu().numpy()
-        
-        try:
-            s = self.eval_score(jacobs, labels)
-        except Exception as e:
-            print(e)
-            s = np.nan
-        acc=0.0
-        return s, acc
+        with tf.Session(graph=tf.Graph()) as network_sess:
+            K.set_session(network_sess)
+
+            # generate a submodel given predicted actions
+            model = model_fn(actions)  # type: Model
+            model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+
+            gradients = K.gradients(model.output, model.input)
+
+            # Wrap the input tensor and the gradient tensor in a callable function
+            f = K.function([model.input], gradients)
+
+            # Random input image
+            x = np.random.rand(1, 100,100,3)
+        reward=9
+        acc=9
+        return reward, acc
