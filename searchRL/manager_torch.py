@@ -166,6 +166,7 @@ class NetworkManager:
         net = model_fn(actions,1).to(self.device)
         scores=[]
         batches_average=2
+        count_batches =0 
         for i, data in enumerate(self.trainloader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -177,8 +178,27 @@ class NetworkManager:
             except Exception as e:
                 print(e)
                 s = np.nan
-
             scores.append(s)
+            count_batches+=1
+            if(count_batches>batches_average):
+                break
+            
             
         reward=np.mean(scores)
+        
+        reward = (reward - self.moving_acc)
+
+        # if rewards are clipped, clip them in the range -0.05 to 0.05
+        
+        # update moving accuracy with bias correction for 1st update
+        if self.beta > 0.0 and self.beta < 1.0:
+            self.moving_acc = self.beta * self.moving_acc + (1 - self.beta) * reward
+            self.moving_acc = self.moving_acc / (1 - self.beta_bias)
+            self.beta_bias = 0
+            #reward = np.clip(reward, -0.1, 0.1)
+
+        print()
+        print("Manager: EWA Accuracy = ", self.moving_acc)
+        neptune.log_metric("EWA",  self.moving_acc)
         return reward, 0.0
+        

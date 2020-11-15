@@ -60,7 +60,8 @@ def eval_score(jacob, labels=None):
     corrs = np.corrcoef(jacob)
     v, _  = np.linalg.eig(corrs)
     k = 1e-5
-    return -np.sum(np.log(v + k) + 1./(v + k))
+    #print(v)
+    return -np.mean(np.log(v + k) + 1./(v + k))
 
 
 
@@ -69,6 +70,8 @@ if(args.use_GPU==True):
 else:
     device = torch.device("cpu")
 print(device)
+
+device = torch.device("cpu")
 THE_START = time.time()
 api = API(args.api_loc)
 print("API loaded")
@@ -118,6 +121,9 @@ for N in runs:
 
         config = api.get_net_config(arch, args.dataset)
         config['num_classes'] = 1
+        
+        
+        #print(config)
 
         network = get_cell_based_tiny_net(config)  # create the network from configuration
         network = network.to(device)
@@ -130,7 +136,7 @@ for N in runs:
         except Exception as e:
             print(e)
             s = np.nan
-
+        print(s)
         scores.append(s)
 
     best_arch = indices[order_fn(scores)]

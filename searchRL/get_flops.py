@@ -11,3 +11,4 @@ def find_flops(model, input = -1):
 
     macs, params = profile(model, inputs=(input, ))
     print(f"Flops of the model: {macs}; Parameters of the model:{params}")
+    return macs,params

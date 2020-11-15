@@ -8,6 +8,7 @@ import torch.nn as nn
 import neptune
 import torch.nn.functional as F
 from model_torch import model_fn
+from get_flops import find_flops
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.cuda.set_device(1)
@@ -44,6 +45,7 @@ class Final_model:
                                                  shuffle=False, num_workers=2)
         
         self.net = model_fn(actions,10).to(self.device)
+        self.macs,_=find_flops(model_fn(actions,10) , input = -1)
         classes = ('plane', 'car', 'bird', 'cat',
                    'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
@@ -51,7 +53,6 @@ class Final_model:
     def get_accuracy(self):
         criterion = nn.CrossEntropyLoss().to(self.device)
         optimizer = optim.Adam(self.net.parameters(), lr=0.001,betas=(0.9, 0.999))
-
         for epoch in range(self.epochs):  # loop over the dataset multiple times
             running_loss = 0.0
             for i, data in enumerate(self.trainloader, 0):
@@ -87,12 +88,29 @@ class Final_model:
                 100 * correct / total))
         
         acc=correct/total
-        
         return acc
     
 if __name__=='__main__':
-    #actions=[1,32,1,32,1,32,3,16]
+    ##### Best states by NAS RL with accuracy as reward ######
     actions=[3,32,3,32,3,64,3,64]
     final_model=Final_model(epochs=70, child_batchsize=128,actions=actions)
     print("Final accuracy of the models",final_model.get_accuracy())
+    print("Flops of the model",final_model.macs)
+    
+    
+    
+    
+    #### Best states across N trials for NAS without training
+#     actions_list=[[3, 32, 3, 16, 3, 32, 1, 32], [3, 32, 1, 64, 3, 16, 3, 32], [3, 32, 3, 16, 3, 16, 1, 32], [3, 64, 1, 32, 3, 64, 3, 32], [3, 32, 3, 16, 3, 64, 3, 16], [3, 16, 3, 64, 1, 64, 1, 32], [3, 16, 3, 16, 1, 32, 3, 16], [3, 16, 3, 16, 1, 32, 1, 32], [3, 64, 1, 32, 3, 32, 3, 32], [3, 64, 1, 32, 3, 16, 1, 32]]
+    
+#     list_accuracies=[]
+#     list_flops=[]
+#     for actions in actions_list:
+#         final_model=Final_model(epochs=70, child_batchsize=128,actions=actions)
+#         list_accuracies.append(final_model.get_accuracy())
+#         list_flops.append(final_model.macs)
+#     print("Final accuracy of the model",np.mean(list_accuracies))
+#     print("Flops of the model",np.mean(list_flops))
+    
+    
     
