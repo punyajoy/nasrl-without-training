@@ -1,11 +1,11 @@
 import numpy as np
 import csv
 
-# import tensorflow as tf
-# from keras import backend as K
-import tensorflow.compat.v1 as tf
-tf.disable_v2_behavior()
-from tensorflow.compat.v1.keras import backend as K
+import tensorflow as tf
+from keras import backend as K
+# import tensorflow.compat.v1 as tf
+# tf.disable_v2_behavior()
+# from tensorflow.compat.v1.keras import backend as K
 
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
@@ -56,7 +56,8 @@ params = {
     'accuracy_beta':ACCURACY_BETA,
     'clip_rewards':CLIP_REWARDS,
     'restore_controller':RESTORE_CONTROLLER,
-    'model_name':'test'
+    'model_name':'test',
+    'use_train': USE_TRAIN
 }
 
 model_name = params['model_name']
@@ -113,6 +114,7 @@ print()
 # clear the previous files
 controller.remove_files()
 
+best_reward= 0.0
 # train for number of trails
 for trial in range(MAX_TRIALS):
     with policy_sess.as_default():
@@ -129,9 +131,8 @@ for trial in range(MAX_TRIALS):
     else:
         reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
-    best_accuracy= 0.0
-    if previous_acc>best_accuracy:
-        best_accuracy = previous_acc
+    if reward>best_reward:
+        best_reward = reward
         best_actions = state_space.parse_state_space_list(actions)
         best_state = state_space.parse_state_space_list(state)
 
@@ -168,7 +169,7 @@ for trial in range(MAX_TRIALS):
     print()
 
 print("Total Reward : ", total_reward)
-neptune.log_metric('best_accuracy',best_accuracy)
+neptune.log_metric('best_reward',best_reward)
 best_actions_text = ','.join([str(elem) for elem in best_actions]) 
 neptune.log_text('best_actions', best_actions_text)
 best_state_text = ','.join([str(elem) for elem in best_state]) 
