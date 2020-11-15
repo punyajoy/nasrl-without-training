@@ -25,6 +25,8 @@ from api_config import project_name,api_token
 neptune.init(project_name,api_token=api_token)
 neptune.set_project(project_name)
 
+import time
+
 # create a shared session between Keras and Tensorflow
 policy_sess = tf.Session()
 K.set_session(policy_sess)
@@ -56,7 +58,7 @@ params = {
     'accuracy_beta':ACCURACY_BETA,
     'clip_rewards':CLIP_REWARDS,
     'restore_controller':RESTORE_CONTROLLER,
-    'model_name':'test',
+    'model_name':'nas',
     'use_train': USE_TRAIN
 }
 
@@ -115,6 +117,7 @@ print()
 controller.remove_files()
 
 best_reward= 0.0
+times = []
 # train for number of trails
 for trial in range(MAX_TRIALS):
     with policy_sess.as_default():
@@ -127,9 +130,13 @@ for trial in range(MAX_TRIALS):
 
     # build a model, train and get reward and accuracy from the network manager
     if(USE_TRAIN):
+        start = time.time()
         reward, previous_acc = manager.get_rewards(model_fn, state_space.parse_state_space_list(actions))
+        times.append(time.time()-start)
     else:
+        start = time.time()
         reward, previous_acc = manager.get_rewards_wt(model_fn, state_space.parse_state_space_list(actions))
+        times.append(time.time()-start)
     print("Rewards : ", reward, "Accuracy : ", previous_acc)
     if reward>best_reward:
         best_reward = reward
@@ -168,6 +175,8 @@ for trial in range(MAX_TRIALS):
         neptune.log_artifact('train_history.csv')
     print()
 
+times = np.array(times)
+neptune.log('average_time_for_reward_calculation', np.average(times))
 print("Total Reward : ", total_reward)
 neptune.log_metric('best_reward',best_reward)
 best_actions_text = ','.join([str(elem) for elem in best_actions]) 
