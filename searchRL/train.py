@@ -94,6 +94,7 @@ dataset = [x_train, y_train, x_test, y_test]  # pack the dataset for the Network
 previous_acc = 0.0
 total_reward = 0.0
 
+
 with policy_sess.as_default():
     # create the Controller and build the internal policy network
     controller = Controller(policy_sess, NUM_LAYERS, state_space,
@@ -112,7 +113,8 @@ manager = NetworkManager(dataset, epochs=MAX_EPOCHS, child_batchsize=CHILD_BATCH
 state = state_space.get_random_state_space(NUM_LAYERS)
 print("Initial Random State : ", state_space.parse_state_space_list(state))
 print()
-
+best_actions = state
+best_state = state
 # clear the previous files
 controller.remove_files()
 
