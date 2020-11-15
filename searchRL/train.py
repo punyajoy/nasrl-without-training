@@ -176,7 +176,7 @@ for trial in range(MAX_TRIALS):
     print()
 
 times = np.array(times)
-neptune.log('average_time_for_reward_calculation', np.average(times))
+neptune.log_metric('average_time_for_reward_calculation', np.average(times))
 print("Total Reward : ", total_reward)
 neptune.log_metric('best_reward',best_reward)
 best_actions_text = ','.join([str(elem) for elem in best_actions]) 
