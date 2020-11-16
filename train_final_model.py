@@ -100,8 +100,7 @@ if __name__=='__main__':
     
     ##### Best states by NAS RL with proxy score as reward ######
     #actions=[1,16,1,16,1,16,3,32]
-    actions=[3,64,1,32,1,32,3,32]
-
+    actions=[3,64,3,32,3,64,3,32]
     final_model=Final_model(epochs=70, child_batchsize=128,actions=actions)
     print("Final accuracy of the models",final_model.get_accuracy())
     print("Flops of the model",final_model.macs)
