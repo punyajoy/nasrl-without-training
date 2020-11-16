@@ -9,7 +9,7 @@ import neptune
 import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-#torch.cuda.set_device(1)
+torch.cuda.set_device(1)
 
 
 #device = "cpu"
@@ -184,25 +184,21 @@ class NetworkManager:
                 break
             
             
-        reward=1+(np.mean(scores)/1000)
+        reward=1+np.mean(scores)/1000
         
-        
-        
+        reward = np.clip(reward, 0, 1)
+
         
         reward = (reward - self.moving_acc)
-        
-        
-        
+
         # if rewards are clipped, clip them in the range -0.05 to 0.05
-        reward = np.clip(reward, 0, 1)
-        
         
         # update moving accuracy with bias correction for 1st update
         if self.beta > 0.0 and self.beta < 1.0:
             self.moving_acc = self.beta * self.moving_acc + (1 - self.beta) * reward
             self.moving_acc = self.moving_acc / (1 - self.beta_bias)
             self.beta_bias = 0
-            reward = np.clip(reward, -0.1, 0.1)
+            #reward = np.clip(reward, -0.1, 0.1)
 
         print()
         print("Manager: EWA Accuracy = ", self.moving_acc)
