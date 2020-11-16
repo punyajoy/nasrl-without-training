@@ -9,7 +9,7 @@ import neptune
 import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-torch.cuda.set_device(1)
+#torch.cuda.set_device(1)
 
 
 #device = "cpu"
